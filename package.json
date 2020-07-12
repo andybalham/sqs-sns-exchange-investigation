@@ -1,7 +1,7 @@
 {
-  "name": "lambda-base",
+  "name": "sqs-sns-exchange-investigation",
   "version": "1.0.0",
-  "description": "Base folder structure for Lambda projects",
+  "description": "SQ/SNS exchange investigation",
   "main": "lambda.js",
   "dependencies": {},
   "devDependencies": {
@@ -28,11 +28,11 @@
     "test": "mocha --require ts-node/register test/**/*.ts",
     "package": "npm run build && copy .\\package.json .\\dist",
     "sam-build": "npm run package && sam build",
-    "delete-stack": "aws cloudformation delete-stack --stack-name lambda-base --region eu-west-2"
+    "delete-stack": "aws cloudformation delete-stack --stack-name sqs-sns-exchange-investigation --region eu-west-2"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/andybalham/LambdaBase.git"
+    "url": "git+https://github.com/andybalham/sqs-sns-exchange-investigation.git"
   },
   "keywords": [
     "Lambda"
@@ -40,7 +40,7 @@
   "author": "Andy Blackledge",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/andybalham/LambdaBase/issues"
+    "url": "https://github.com/andybalham/sqs-sns-exchange-investigation/issues"
   },
-  "homepage": "https://github.com/andybalham/LambdaBase#readme"
+  "homepage": "https://github.com/andybalham/sqs-sns-exchange-investigation#readme"
 }

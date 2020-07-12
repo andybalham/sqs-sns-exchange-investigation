@@ -1,11 +1,18 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  lambda-base
+  sqs-sns-exchange-investigation
 
-  Example SAM Template for lambda-base
+  Investigation into using SQS and SNS for inter-Lambda exchanges.
   
-# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
+Parameters:
+  ApplicationName:
+    Type: String
+    Default: sqs-sns-exchange-investigation
+  ApiStageName:
+    Type: String
+    Default: dev
+        
 Globals:
   Function:
     Runtime: nodejs12.x
@@ -13,17 +20,72 @@ Globals:
     Timeout: 3
 
 Resources:
-  HelloWorldFunction:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+
+  TargetFunction:
+    Type: AWS::Serverless::Function
     Properties:
-      Handler: lambda.handle
+      FunctionName: !Sub ${ApplicationName}-TargetFunction
+      Handler: lambda.handleTarget
+      Environment:
+        Variables:
+          RESPONSE_TOPIC: !Ref TargetFunctionResponseTopic
+      Policies:
+        - SNSPublishMessagePolicy:
+            TopicName: !GetAtt TargetFunctionResponseTopic.TopicName
+      Events:
+        SQSEvent:
+          Type: SQS
+          Properties:
+            Queue: !GetAtt TargetFunctionRequestQueue.Arn
+            BatchSize: 10
+            Enabled: true
+
+  # To allow your function time to process each batch of records, set the source queue's visibility timeout to 
+  # at least 6 times the timeout that you configure on your function. The extra time allows for Lambda to retry
+  # if your function execution is throttled while your function is processing a previous batch. 
+
+  TargetFunctionRequestQueue:
+    Type: AWS::SQS::Queue
+    Properties: 
+      QueueName: !Sub ${ApplicationName}-TargetFunctionRequestQueue
+
+  TargetFunctionResponseTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName:
+        Fn::Sub: ${ApplicationName}-TargetFunctionResponseTopic
+
+  TestFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub ${ApplicationName}-TestFunction
+      Handler: lambda.handleTest
+      Environment:
+        Variables:
+          RESPONSE_SUBSCRIPTION_ID: !Sub ${ApplicationName}-TestFunction
+          TARGET_FUNCTION_REQUEST_QUEUE_URL: !Ref TargetFunctionRequestQueue
+      Policies:
+        - SQSSendMessagePolicy:
+            QueueName: !GetAtt TargetFunctionRequestQueue.QueueName
+      Events:
+        TargetFunctionResponse:
+          Type: SNS
+          Properties:
+            Topic: !Ref TargetFunctionResponseTopic
+            FilterPolicy:
+              FunctionName:
+                - !Sub ${ApplicationName}-TestFunction
 
 Outputs:
-  # Find out more about other implicit resources you can reference within SAM
-  # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
-  HelloWorldFunction:
-    Description: "Hello World Lambda Function ARN"
-    Value: !GetAtt HelloWorldFunction.Arn
-  HelloWorldFunctionIamRole:
-    Description: "Implicit IAM Role created for Hello World function"
-    Value: !GetAtt HelloWorldFunctionRole.Arn
+  TargetFunctionArn:
+    Description: "TargetFunction ARN"
+    Value: !GetAtt TargetFunction.Arn
+  TargetFunctionRequestQueueUrl:
+    Description: "TargetFunction request queue URL"
+    Value: !Ref TargetFunctionRequestQueue
+  TargetFunctionRequestQueueName:
+    Description: "TargetFunction request queue name"
+    Value: !GetAtt TargetFunctionRequestQueue.QueueName
+  TargetFunctionResponseTopicArn:
+    Description: "TargetFunction response topic ARN"
+    Value: !Ref TargetFunctionResponseTopic
