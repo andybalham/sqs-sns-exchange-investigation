@@ -11,13 +11,4 @@ describe('Test lambdas', () => {
 
         expect(result).to.equal(event);
     });
-
-    it('handles target invoke', async () => {
-
-        const event = 'Hello Lambda!';
-
-        const result = await handleTarget(event);
-
-        expect(result).to.equal(event);
-    });
 });
