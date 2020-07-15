@@ -8,15 +8,5 @@
                 "StringValue": "TestFunction"
             }
         }
-    },
-    {
-        "Message": "{\"callContext\":{\"correlationId\":\"COR:8928EU2983JD923\"},\"responseContext\":{\"requestId\":\"REQ:92838JF982J3R9\"},\"response\":{\"any\":\"old\",\"rubbish\":true}}",
-        "TopicArn": "responseTopicArn",
-        "MessageAttributes": {
-            "FunctionName": {
-                "DataType": "String",
-                "StringValue": "TestFunction"
-            }
-        }
     }
 ]

@@ -1,8 +1,9 @@
 import { TestLambda } from './TestLambda';
 import { TargetLambda } from './TargetLambda';
-import { SNS } from 'aws-sdk';
+import { SNS, SQS } from 'aws-sdk';
 
-const testLambda = new TestLambda();
+const sqsClient = new SQS;
+const testLambda = new TestLambda(process.env.RESPONSE_SUBSCRIPTION_ID ?? 'undefined', sqsClient, process.env.TARGET_FUNCTION_REQUEST_QUEUE_URL ?? 'undefined');
 
 export const handleTest = async (event: any): Promise<any> => {
     return await testLambda.handle(event);

@@ -1,33 +1,7 @@
 import { SNS } from 'aws-sdk';
-import { SQSEvent, SQSRecord } from 'aws-lambda';
+import { SQSEvent } from 'aws-lambda';
 import { PublishInput } from 'aws-sdk/clients/sns';
-
-class FlowCallContext {
-    correlationId: string;
-}
-
-abstract class FlowMessage {
-    callContext: FlowCallContext;
-}
-
-class FlowRequestContext {
-    functionName: string;
-    requestId: string;
-}
-
-class FlowRequestMessage extends FlowMessage {
-    requestContext: FlowRequestContext;
-    request: any;
-}
-
-class FlowResponseContext {
-    requestId: string;
-}
-
-class FlowResponseMessage extends FlowMessage {
-    responseContext: FlowResponseContext;
-    response: any;
-}
+import { FlowRequestMessage, FlowResponseMessage } from './FlowMessage';
 
 export class TargetLambda {
 
@@ -58,8 +32,9 @@ export class TargetLambda {
 
         console.log(`recordCount: ${sqsEvent.Records.length}`);
 
-        const handleRecord = async (record: SQSRecord): Promise<void> => {
+        for (let index = 0; index < sqsEvent.Records.length; index++) {
 
+            const record = sqsEvent.Records[index];
             const requestMessage: FlowRequestMessage = JSON.parse(record.body);
 
             const responseMessage: FlowResponseMessage = {
@@ -69,7 +44,7 @@ export class TargetLambda {
                 },
                 response: requestMessage.request
             };
-
+    
             const params: PublishInput = {
                 Message: JSON.stringify(responseMessage),
                 TopicArn: this.responseTopicArn,
@@ -77,16 +52,13 @@ export class TargetLambda {
                     FunctionName: { DataType: 'String', StringValue: requestMessage.requestContext.functionName }
                 }
             };
-
+    
+            console.log(`params: ${JSON.stringify(params)}`);
+    
             const publishResponse = await this.snsClient.publish(params).promise();
-
-            console.log(`publishResponse: ${JSON.stringify(publishResponse)}`);
-        };
-
-        sqsEvent.Records.forEach(record => {
-            handleRecord(record)
-                .catch(err => console.error(err.message));
-        });
+    
+            console.log(`publishResponse: ${JSON.stringify(publishResponse)}`);                
+        }
 
         return null;
     }

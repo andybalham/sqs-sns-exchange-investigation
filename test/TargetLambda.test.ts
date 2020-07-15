@@ -1,5 +1,5 @@
-import * as exampleSQSEvent from './ExampleSQSEvent.json';
-import * as expectedSNSResponse from './ExpectedSNSResponse.json';
+import * as requestSQSEvent from './RequestSQSEvent.json';
+import * as responseSNS from './ResponseSNS.json';
 import * as AWSMock from 'aws-sdk-mock';
 import AWS from 'aws-sdk';
 import { PublishInput } from 'aws-sdk/clients/sns';
@@ -9,7 +9,7 @@ import { expect } from 'chai';
 describe('Test TargetLambda', () => {
 
     beforeEach(() => {
-        AWSMock.setSDKInstance(AWS);        
+        AWSMock.setSDKInstance(AWS);
     });
 
     afterEach(() => {
@@ -29,13 +29,13 @@ describe('Test TargetLambda', () => {
 
         const snsClient = new AWS.SNS;
         const targetLambda = new TargetLambda(snsClient, 'responseTopicArn');
-        
-        const handleResult = await targetLambda.handle(exampleSQSEvent);
-                
+
+        const handleResult = await targetLambda.handle(requestSQSEvent);
+
         expect(handleResult).to.be.null;
 
         actualPublishInputs.forEach((actualPublishInput, index) => {
-            expect(actualPublishInput, `index=${index}`).deep.equal(expectedSNSResponse[index]);
+            expect(actualPublishInput, `index=${index}`).deep.equal(responseSNS[index]);
         });
     });
 });
